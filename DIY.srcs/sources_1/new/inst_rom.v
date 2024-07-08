@@ -31,7 +31,7 @@ module inst_rom(
 
     initial begin
         $readmemh("E:/projects_2024/FPGA_MIPS/DIY/ori.txt", inst_mem);
-        $display("%h",inst_mem[1]);
+        // $display("%h",inst_mem[1]);
     end
 
     
