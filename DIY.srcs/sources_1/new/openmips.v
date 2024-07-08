@@ -164,7 +164,7 @@ module openmips(
         .rst(rst),
 
         //从ID输入的
-        .id_aluop(id_aluop_i),
+        .id_aluop(id_aluop_o),
         .id_alusel(id_alusel_o),
         .id_reg1(id_reg1_o),
         .id_reg2(id_reg2_o),

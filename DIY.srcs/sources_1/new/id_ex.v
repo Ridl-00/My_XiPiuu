@@ -48,7 +48,7 @@ module id_ex(
             ex_wreg<=`WriteDisable;
         end else begin
             ex_aluop<=id_aluop;
-            ex_alusel<=id_aluop;
+            ex_alusel<=id_alusel;
 			ex_reg1 <= id_reg1;
 			ex_reg2 <= id_reg2;
 			ex_wd <= id_wd;

@@ -48,17 +48,17 @@ module regfile(
 
     //写操作
     always @(posedge clk) begin
-        if (rst==`RstEnable) begin
-            for (i=0 ;i<`RegNum;i=i+1) begin
-                regs[i]<=32'b0;
-            end
-        end else begin
+        // if (rst==`RstEnable) begin
+        //     for (i=0 ;i<`RegNum;i=i+1) begin
+        //         regs[i]<=32'b0;
+        //     end
+        // end else begin
             if((we==`WriteEnable)&&(waddr!=`RegNumLog2'h0))begin
                 regs[waddr]<=wdata;
             end
         end
         
-    end
+    // end
 
     //读1操作
     always @(*) begin
