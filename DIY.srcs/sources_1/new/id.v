@@ -26,6 +26,16 @@ module id(
     input wire[`InstAddrBus] pc_i,
     input wire[`InstBus] inst_i,
 
+    //处于EX阶段的指令要写入目的寄存器的信息
+    input wire ex_wreg_i,
+    input wire[`RegBus] ex_wdata_i,
+    input wire[`RegAddrBus] ex_wd_i,
+
+    //WB阶段的指令要写入目的寄存器的信息
+    input wire mem_wreg_i,
+    input wire[`RegBus] mem_wdata_i,
+    input wire[`RegAddrBus] mem_wd_i,
+
     input wire[`RegBus] reg1_data_i,
     input wire[`RegBus] reg2_data_i,
 
@@ -40,7 +50,7 @@ module id(
     output reg[`RegBus] reg2_o,
     output reg[`RegAddrBus] wd_o, //译码阶段的指令要写入的目的寄存器地址
     output reg wreg_o //译码阶段的指令是否有要写入的目的寄存器
-    );
+);
 
     //取得指令的指令码，功能码
     wire[5:0] op=inst_i[31:26];
@@ -100,6 +110,11 @@ module id(
     always @(*) begin
         if(rst==`RstEnable)begin
             reg1_o<=`ZeroWord;
+        //reg1要读&&EX要写&&reg1要读的寄存器就是EX阶段要写的寄存器
+        end else if((reg1_read_o==1'b1)&&(ex_wreg_i==1'b1)&&(ex_wd_i==reg1_addr_o))begin
+            reg1_o<=ex_wdata_i;
+        end else if((reg1_read_o==1'b1)&&(mem_wreg_i==1'b1)&&(mem_wd_i==reg1_addr_o))begin
+            reg1_o<=mem_wdata_i;
         end else if(reg1_read_o==1'b1)begin
             reg1_o<=reg1_data_i; //Regfile读端口1的输出值
         end else if(reg1_read_o==1'b0)begin
@@ -112,6 +127,10 @@ module id(
     always @(*) begin
         if(rst==`RstEnable)begin
             reg2_o<=`ZeroWord;
+        end else if((reg2_read_o==1'b1)&&(ex_wreg_i==1'b1)&&(ex_wd_i==reg2_addr_o))begin
+            reg2_o<=ex_wdata_i;
+        end else if((reg2_read_o==1'b1)&&(mem_wreg_i==1'b1)&&(mem_wd_i==reg2_addr_o))begin
+            reg2_o<=mem_wdata_i;
         end else if(reg2_read_o==1'b1)begin
             reg2_o<=reg2_data_i;
         end else if(reg2_read_o==1'b0)begin

@@ -10,7 +10,7 @@
 // Target Devices: 
 // Tool Versions: 
 // Description: 
-// 
+// 顶层，连接整条流水线
 // Dependencies: 
 // 
 // Revision:
@@ -112,7 +112,17 @@ module openmips(
         .reg1_data_i(reg1_data),
         .reg2_data_i(reg2_data),
 
-        //输出到regfile的
+        //从EX输入的
+        .ex_wreg_i(ex_wreg_o),
+        .ex_wdata_i(ex_wdata_o),
+        .ex_wd_i(ex_wd_o),
+
+        //从MEM输入的
+        .mem_wreg_i(mem_wreg_o),
+        .mem_wdata_i(mem_wdata_o),
+        .mem_wd_i(mem_wd_o),
+
+        //流水线结束后正常输出到regfile的
         .reg1_read_o(reg1_read),
         .reg2_read_o(reg2_read),
         .reg1_addr_o(reg1_addr),
@@ -135,7 +145,7 @@ module openmips(
         //从MEM/WB输入的
         .we(wb_wreg_i),
         .waddr(wb_wd_i),
-        .wdata(wb_data_i),
+        .wdata(wb_wdata_i),
 
         //从ID输入的
         .re1(reg1_read),
@@ -154,7 +164,7 @@ module openmips(
         .rst(rst),
 
         //从ID输入的
-        .id_aluop(id_aluop_i),
+        .id_aluop(id_aluop_o),
         .id_alusel(id_alusel_o),
         .id_reg1(id_reg1_o),
         .id_reg2(id_reg2_o),
@@ -230,7 +240,7 @@ module openmips(
 		.mem_wreg(mem_wreg_o),
 		.mem_wdata(mem_wdata_o),
 	
-		//输出到WB的
+		//输出到regfile的
 		.wb_wd(wb_wd_i),
 		.wb_wreg(wb_wreg_i),
 		.wb_wdata(wb_wdata_i)

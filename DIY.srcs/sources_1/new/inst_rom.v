@@ -30,7 +30,7 @@ module inst_rom(
     reg[`InstBus] inst_mem[0:`InstMemNum-1];
 
     initial begin
-        $readmemh("E:/projects_2024/FPGA_MIPS/DIY/ori.txt", inst_mem);
+        $readmemh("E:/projects_2024/FPGA_MIPS/DIY/inst_rom.txt", inst_mem);
         $display("%h",inst_mem[1]);
     end
 
