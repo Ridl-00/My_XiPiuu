@@ -20,6 +20,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+`include "defines.v"
 
 module regfile(
     input wire rst,
@@ -51,8 +52,7 @@ module regfile(
             for (i=0 ;i<`RegNum;i=i+1) begin
                 regs[i]<=32'b0;
             end
-        end
-        if(rst==`RstDisable)begin
+        end else begin
             if((we==`WriteEnable)&&(waddr!=`RegNumLog2'h0))begin
                 regs[waddr]<=wdata;
             end
@@ -66,6 +66,7 @@ module regfile(
             rdata1<=`ZeroWord;
         end else if(raddr1==`RegNumLog2'h0)begin
             rdata1<=`ZeroWord;
+        // 如果要读取的寄存器是在下一个时钟上升沿要写入的寄存器，就将要写入的数据直接作为结果输出
         end else if((raddr1==waddr)&&(we==`WriteEnable)&&(re1==`ReadEnable))begin
             rdata1<=wdata;
         end else if(re1==`ReadEnable)begin
