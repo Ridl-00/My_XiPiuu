@@ -72,17 +72,16 @@ module regfile(
     //读2
 	always @ (*) begin
 		if(rst == `RstEnable) begin
-			  rdata2 <= `ZeroWord;
-	  end else if(raddr2 == `RegNumLog2'h0) begin
+			rdata2 <= `ZeroWord;
+	    end else if(raddr2 == `RegNumLog2'h0) begin
 	  		rdata2 <= `ZeroWord;
-	  end else if((raddr2 == waddr) && (we == `WriteEnable) 
-	  	            && (re2 == `ReadEnable)) begin
-	  	  rdata2 <= wdata;
-	  end else if(re2 == `ReadEnable) begin
-	      rdata2 <= regs[raddr2];
-	  end else begin
-	      rdata2 <= `ZeroWord;
-	  end
+	    end else if((raddr2 == waddr) && (we == `WriteEnable) && (re2 == `ReadEnable)) begin
+	  	    rdata2 <= wdata;
+	    end else if(re2 == `ReadEnable) begin
+	        rdata2 <= regs[raddr2];
+	    end else begin
+	        rdata2 <= `ZeroWord;
+	    end
 	end
 
 endmodule
