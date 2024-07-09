@@ -99,6 +99,26 @@ module id(
                     wd_o<=inst_i[20:16]; //指令执行要写的目的寄存器地址
                     instvalid<=`InstValid; //ori指令是有效指令
                 end
+                `EXE_ANDI:begin
+                    wreg_o<=`WriteEnable;
+                    aluop_o<=`EXE_AND_OP;
+                    alusel_o<=`EXE_RES_LOGIC;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b0;
+                    imm<={16'h0, inst_i[15:0]};
+                    wd_o<=inst_i[20:16];
+                    instvalid<=`InstValid;
+                end
+                `EXE_LUI:begin
+                    wreg_o<=`WriteEnable;
+                    aluop_o<=`EXE_OR_OP; // 与逻辑或相同的aluop
+                    alusel_o<=`EXE_RES_LOGIC;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b0;
+                    imm<={inst_i[15:0], 16'h0};
+                    wd_o<=inst_i[20:16];
+                    instvalid<=`InstValid;
+                end
                 default:begin
                     
                 end

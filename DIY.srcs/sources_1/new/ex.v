@@ -23,6 +23,8 @@
 
 module ex(
     input wire rst,
+
+    //输入到EX的
     input wire[`AluSelBus] alusel_i,
     input wire[`AluOpBus] aluop_i,
     input wire[`RegBus] reg1_i,
@@ -32,11 +34,16 @@ module ex(
 
     output reg[`RegAddrBus] wd_o,
     output reg wreg_o,
-    output reg[`RegBus] wdata_o
+    output reg[`RegBus] wdata_o,
+
+    output reg whilo_o, //EX的指令是否要写HI、LO寄存器
+    output reg[`RegBus] hi_o, //输入HI寄存器的值
+    output reg[`RegBus] lo_o //输入LO寄存器的值
+
     );
 
-    // 保存逻辑运算的结果
-    reg[`RegBus] logicout;
+    reg[`RegBus] logicout; // 保存逻辑运算的结果
+    reg[`RegBus] shiftres; // 保存位移运算的结果
     
     //依据aluop_i进行运算,此处只有逻辑或
     always @(*) begin
@@ -61,6 +68,9 @@ module ex(
         case(alusel_i)
             `EXE_RES_LOGIC:begin
                 wdata_o<=logicout; //运算结果
+            end
+            `EXE_RES_SHIFT:begin
+                wdata_o<=shiftres;
             end
             default:begin
                 wdata_o<=`ZeroWord;
