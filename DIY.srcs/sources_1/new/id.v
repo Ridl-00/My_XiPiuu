@@ -135,25 +135,57 @@ module id(
                             reg2_read_o<=1'b1;
                             instvalid<=`InstValid;
                         end
-                        
                         `EXE_SLL:begin
-                            
+                            wreg_o<=`WriteEnable;
+                            aluop_o<=`EXE_SLL_OP;
+                            alusel_o<=`EXE_RES_SHIFT;
+                            reg1_read_o<=1'b0;
+                            reg2_read_o<=1'b1;
+                            imm[4:0]<=shamt;
+                            wd_o<=rd;
+                            instvalid<=`InstValid;
                         end
                         `EXE_SRL:begin
-                            
+                            wreg_o<=`WriteEnable;
+                            aluop_o<=`EXE_SRL_OP;
+                            alusel_o<=`EXE_RES_SHIFT;
+                            reg1_read_o<=1'b0;
+                            reg2_read_o<=1'b1;
+                            imm[4:0]<=shamt;
+                            wd_o<=rd;
+                            instvalid<=`InstValid;
                         end
                         `EXE_SRLV:begin
-                            
+                            wreg_o<=`WriteEnable;
+                            aluop_o<=`EXE_SRLV_OP;
+                            alusel_o<=`EXE_RES_SHIFT;
+                            reg1_read_o<=1'b1;
+                            reg2_read_o<=1'b1;
+                            valid<=`Instvalid;
                         end
-
                         `EXE_OR:begin
-                            
+                            wreg_o<=`WriteEnable;
+                            aluop_o<=`EXE_OR_OP;
+                            alusel_o<=`EXE_RES_LOGIC;
+                            reg1_read_o<=1'b1;
+                            reg2_read_o<=1'b1;
+                            valid<=`Instvalid;
                         end
                         `EXE_XOR:begin
-                            
+                            wreg_o<=`WriteEnable;
+                            aluop_o<=`EXE_XOR_OP;
+                            alusel_o<=`EXE_RES_LOGIC;
+                            reg1_read_o<=1'b1;
+                            reg2_read_o<=1'b1;
+                            valid<=`Instvalid;
                         end
                         `EXE_AND:begin
-                            
+                            wreg_o<=`WriteEnable;
+                            aluop_o<=`EXE_AND_OP;
+                            alusel_o<=`EXE_RES_LOGIC;
+                            reg1_read_o<=1'b1;
+                            reg2_read_o<=1'b1;
+                            valid<=`Instvalid;
                         end
 
                         `EXE_JR:begin
@@ -268,16 +300,38 @@ module id(
                 end
                 //装载
                 `EXE_LW:begin
-                    
+                    wreg_o<=`WriteEnable;
+                    aluop_o<=`EXE_LW_OP;
+                    alusel_o<=`EXE_RES_LOAD_STORE;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b0;
+                    wd_o<=rt;
+                    instvalid<=`InstValid;
                 end
                 `EXE_SW:begin
-                    
+                    wreg_o<=`WriteDisable;
+                    aluop_o<=`EXE_SW_OP;
+                    alusel_o<=`EXE_RES_LOAD_STORE;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b1;
+                    instvalid<=`InstValid;
                 end
                 `EXE_LB:begin
-                    
+                    wreg_o<=`WriteEnable;
+                    aluop_o<=`EXE_LB_OP;
+                    alusel_o<=`EXE_RES_LOAD_STORE;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b0;
+                    wd_o<=rt;
+                    instvalid<=`InstValid;
                 end
                 `EXE_SB:begin
-                    
+                    wreg_o<=`WriteDisable;
+                    aluop_o<=`EXE_SB_OP;
+                    alusel_o<=`EXE_RES_LOAD_STORE;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b1;
+                    instvalid<=`InstValid;
                 end
                 //跳转
                 `EXE_J:begin
