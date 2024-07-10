@@ -36,9 +36,11 @@ module ex(
     output reg wreg_o,
     output reg[`RegBus] wdata_o,
 
-    output reg whilo_o, //EX的指令是否要写HI、LO寄存器
-    output reg[`RegBus] hi_o, //输入HI寄存器的值
-    output reg[`RegBus] lo_o //输入LO寄存器的值
+    //装载、存储指令所需
+    output wire[`AluOpBus] aluop_o,
+    output wire[`RegBus] mem_addr_o,
+    output wire[`RegBus] reg2_o,
+
 
     );
 
@@ -49,8 +51,15 @@ module ex(
     wire[`RegBus] reg2_i_mux; //寄存器2的多选器
     wire[`RegBus] reg1_i_not;
     wire[`RegBus] result_sum;
+
+    //传递到MEM，用于加载，存储指令
+    assign aluop_o=aluop_i;
+    assign mem_addr_o=reg1_i+{{16{inst_i[15]}},inst_i[15:0]};
+        //{{16{inst_i[15]}}：这是一个大括号扩展操作（，它复制inst_i[15]的值到一个16位的向量中。
+        //如果inst_i[15]是1，则这个表达式结果为16'b1111111111111111；如果是0，则结果为16'b0000000000000000。
     
-    //依据aluop_i进行运算,此处只有逻辑或
+    //依据aluop_i进行运算
+    //逻辑部分
     always @(*) begin
         if(rst==`RstEnable)begin
             logicout<=`ZeroWord;
@@ -62,6 +71,12 @@ module ex(
                 `EXE_LUI_OP:begin
                     logicout<=reg1_i|reg2_i;
                 end
+                `EXE_AND_OP:begin
+                    logicout<=reg1_i&reg2_i;
+                end
+                `EXE_XOR_OP:begin
+                    logicout<=reg1_i^reg2_i;
+                end
                 default:begin
                     logicout<=`ZeroWord;
                 end
@@ -69,9 +84,32 @@ module ex(
         end //if     
     end //always
 
+    //位移部分
+    always @(*) begin
+        if(rst==`RstEnable)begin
+            shiftres<=`ZeroWord;
+        end else begin
+            case (aluop_i)
+                `EXE_SLL_OP:begin
+                    shiftres<=reg2_i<<reg1_i[4:0];
+                end 
+                `EXE_SRL_OP:begin
+                    shiftres<=reg2_i>>reg1_i[4:0];
+                end
+//！ srlv还没写                
+                `EXE_SRLV_OP:begin
+                    
+                end
+
+                default:begin
+                    shiftres<=`ZeroWord;
+                end
+            endcase
+        end
+    end
 
     // 算数部分
-    assign reg2_i_mux=((aluop_i==`EXE_SUB_OP)||(aluop_i==`EXE_SUBU_OP)||(aluop_i==`EXE_SLT_OP))
+    assign reg2_i_mux=((aluop_i==`EXE_SUB_OP)||(aluop_i==`EXE_SUBU_OP))
                         ?(~reg2_i)+1:reg2_i; //如果是减法或slt指令reg2_i_mux就存补码，否则存原码
     assign result_sum=reg1_i+reg2_i_mux;
 

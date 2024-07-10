@@ -72,7 +72,6 @@
 //转移
 `define EXE_J    6'b000010
 `define EXE_JAL  6'b000011
-`define EXE_JR   6'b001000
 
 
 `define EXE_NOP  6'b000000 //无操作
@@ -94,6 +93,8 @@
 `define EXE_SLL  6'b000000
 `define EXE_SRL  6'b000010
 `define EXE_SRLV 6'b000110
+//转移
+`define EXE_JR   6'b001000
 
 
 //AluOp  Alu操作
@@ -130,13 +131,15 @@
 `define EXE_SRLV_OP  8'b00000110
 
 
-`define EXE_NOP_OP 8'b00000000 //无
+`define EXE_NOP_OP   8'b00000000 //无
 
 //ALusel  Alu选择
 `define EXE_RES_LOGIC 3'b001 //逻辑操作模式
 `define EXE_RES_SHIFT 3'b010 //选择移位操作
 `define EXE_RES_ARITHMETIC 3'b100 //算数指令模式
 `define EXE_RES_MOVE 3'b011 //数据移动（装载指令模式）
+`define EXE_RES_JUMP_BRANCH 3'b110 //跳转、分支模式
+`define EXE_RES_LOAD_STORE 3'b111 //装载、存储模式
 
 `define EXE_RES_NOP 3'b000
 

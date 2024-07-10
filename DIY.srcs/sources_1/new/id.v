@@ -50,6 +50,17 @@ module id(
     output reg[`RegBus] reg2_o,
     output reg[`RegAddrBus] wd_o, //译码阶段的指令要写入的目的寄存器地址
     output reg wreg_o //译码阶段的指令是否有要写入的目的寄存器
+    output wire[`RegBus] inst_o, //当前处于译码阶段的指令
+
+    output reg next_inst_in_delayslot_o, //下一条进入译码阶段的指令是否位于延迟槽
+    output reg is_in_delayslot_o, //当前处于译码阶段的指令是否位于延迟槽
+
+    output reg branch_flag_o,
+    output reg[`RegBus] branch_target_address_o,
+    output reg[`RegBus] link_addr_o, //转移指令要保存的返回地址
+
+    output wire stallreq //译码阶段请求流水线暂停
+
 );
 
     //取得指令的指令码，功能码
@@ -65,6 +76,13 @@ module id(
 
     //指令是否有效
     reg instvalid;
+    wire[`RegAddrBus] pc_plus_4; //当前译码阶段指令后面第1条指令的地址
+    wire[`RegAddrBus] pc_plus_8; //当前译码阶段指令后面第2条指令的地址
+    wire[`RegBus] imm_sll2_signedext; //分支指令中的offset左移两位，再符号扩展至32位的值
+
+    assign pc_plus_4=pc_i+4;
+    assign pc_plus_8=pc_i+8;
+    assign imm_sll2_signedext={{14{inst_i[15]}}, inst_i[15:0], 2'b00};
 
     //对指令译码
     always @(*) begin
@@ -79,6 +97,10 @@ module id(
             reg1_addr_o<=`NOPRegAddr;
             reg2_addr_o<=`NOPRegAddr;
             imm<=`ZeroWord;
+            link_addr_o<=`ZeroWord;
+            branch_target_address_o<=`ZeroWord;
+            branch_flag_o<=`NotBranch;
+            next_inst_in_delayslot_o<=`NotInDelaySlot;
         end else begin
             aluop_o<=`EXE_NOP_OP;
             alusel_o<=`EXE_RES_NOP;
@@ -90,6 +112,10 @@ module id(
             reg1_addr_o<=rs;
             reg2_addr_o<=rt;
             imm<=`ZeroWord;
+            link_addr_o<=`ZeroWord;
+            branch_target_address_o<=`ZeroWord;
+            branch_flag_o<=`NotBranch;
+            next_inst_in_delayslot_o<=`NotInDelaySlot;
             case(op)
                 `EXE_SPECIAL_INST:begin
                     case (funct)
@@ -100,7 +126,48 @@ module id(
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b1;
                             instvalid<=`InstValid;
-                        end 
+                        end
+                        `EXE_SUB:begin
+                            wreg_o<=`WriteEnable;
+                            aluop_o<=`EXE_SUB_OP;
+                            alusel_o<=`EXE_RES_ARITHMETIC;
+                            reg1_read_o<=1'b1;
+                            reg2_read_o<=1'b1;
+                            instvalid<=`InstValid;
+                        end
+                        
+                        `EXE_SLL:begin
+                            
+                        end
+                        `EXE_SRL:begin
+                            
+                        end
+                        `EXE_SRLV:begin
+                            
+                        end
+
+                        `EXE_OR:begin
+                            
+                        end
+                        `EXE_XOR:begin
+                            
+                        end
+                        `EXE_AND:begin
+                            
+                        end
+
+                        `EXE_JR:begin
+                            wreg_o<=`WriteDisable;
+                            aluop_o<=`EXE_JR_OP;
+                            alusel_o<=`EXE_RES_JUMP_BRANCH;
+                            reg1_read_o<=1'b1;
+                            reg2_read_o<=1'b0;
+                            // link_addr_o<=`ZeroWord;
+                            branch_target_address_o;<=reg1_o;
+                            branch_flag_o<=`Branch;
+                            next_inst_in_delayslot_o<=`InDelaySlot;
+                            instvalid<=`InstValid;
+                        end
                         default:begin
                             
                         end
@@ -136,6 +203,108 @@ module id(
                     wd_o<=rt; //存回寄存器2
                     instvalid<=`InstValid;
                 end
+                `EXE_ADDI:begin
+                    wreg_o<=`WriteEnable;
+                    sluop_o<=`EXE_ADDI_OP;
+                    alusel_o<=`EXE_ARITHMETIC;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b0;
+                    imm<={{16{inst_i[15]}}, inst[15:0]};
+                    wd_o<=rt;
+                    instvalid<=`InstValid;
+                end
+                //分支
+                `EXE_BNE:begin
+                    wreg_o<=`WriteDisable;
+                    aluop_o<=`EXE_BNE_OP;
+                    alusel_o<=`EXE_RES_JUMP_BRANCH;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b1;
+                    instvalid<=`InstValid;
+                    if(reg1_o!=reg2_o)begin
+                        branch_target_address_o<=pc_plus_4+imm_sll2_signedext;
+                        branch_flag_o<=`Branch;
+                        next_inst_in_delayslot_o<=`InDelaySlot;
+                    end
+                end
+                `EXE_BEQ:begin
+                    wreg_o<=`WriteDisable;
+                    aluop_o<=`EXE_BEQ_OP;
+                    alusel_o<=`EXE_RES_JUMP_BRANCH;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b1;
+                    instvalid<=`InstValid;
+                    if(reg1_o==reg2_o)begin
+                        branch_target_address_o<=pc_plus_4+imm_sll2_signedext;
+                        branch_flag_o<=`Branch;
+                        next_inst_in_delayslot_o<=`InDelaySlot;
+                    end
+                end
+                `EXE_BLEZ:begin
+                    wreg_o<=`WriteDisable;
+                    aluop_o<=`EXE_BLEZ_OP;
+                    alusel_o<=`EXE_RES_JUMP_BRANCH;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b0;
+                    instvalid<=`InstValid;
+                    if((reg1_o[31]==1'b1)||(reg1_o==`ZereWord))begin //<=0
+                        branch_target_address_o<=pc_plus_4+imm_sll2_signedext;
+                        branch_flag_o<=`Branch;
+                        next_inst_in_delayslot_o<=`InDelaySlot;
+                    end
+                end
+                `EXE_BGTZ:begin
+                    wreg_o<=`WriteDisable;
+                    aluop_o<=`EXE_BGTZ_OP;
+                    alusel_o<=`EXE_RES_JUMP_BRANCH;
+                    reg1_read_o<=1'b1;
+                    reg2_read_o<=1'b0;
+                    instvalid<=`InstValid;
+                    if((reg1_o[31]==1'b0)||(reg1_o!=`ZereWord))begin //>0
+                        branch_target_address_o<=pc_plus_4+imm_sll2_signedext;
+                        branch_flag_o<=`Branch;
+                        next_inst_in_delayslot_o<=`InDelaySlot;
+                    end
+                end
+                //装载
+                `EXE_LW:begin
+                    
+                end
+                `EXE_SW:begin
+                    
+                end
+                `EXE_LB:begin
+                    
+                end
+                `EXE_SB:begin
+                    
+                end
+                //跳转
+                `EXE_J:begin
+                    wreg_o<=`WrireDisable;
+                    aluop_o<=`EXE_J_OP;
+                    alusel_o<=`EXE_RES_JUMP_BRANCH;
+                    reg1_read_o<=1'b0;
+                    reg2_read_o<=1'b0;
+                    link_addr_o<=`ZeroWord;
+                    branch_flag_o<=`Branch;
+                    next_inst_in_delayslot_o<=`InDelaySlot;
+                    instvalid<=`InstValid;
+                    branch_target_address_o<={pc_plus_4[31:28], inst_i[25:0], 2'b00};
+                end
+                `EXE_JAL:begin
+                    wreg_o<=`WriteEnable;
+                    aluop_o<=`EXE_JAL_OP;
+                    alusel_o<=`EXE_RES_JUMP_BRANCH;
+                    reg1_read_o<=1'b0;
+                    reg2_read_o<=1'b0;
+                    wd_o<=5'b11111; //将返回地址链接到通用寄存器31，即跳转指令后的第二条指令的地址
+                    link_addr_o<=pc_plus_8; //执行完跳转指令的指令和跳转指令紧跟的（延迟槽里的）指令之后回来的位置
+                    branch_flag_o<=`Branch;
+                    next_inst_in_delayslot_o<=`InDelaySlot;
+                    instvalid<=`InstValid;
+                end
+
                 default:begin
                     
                 end
