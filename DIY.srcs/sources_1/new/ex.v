@@ -39,8 +39,7 @@ module ex(
     //装载、存储指令所需
     output wire[`AluOpBus] aluop_o,
     output wire[`RegBus] mem_addr_o,
-    output wire[`RegBus] reg2_o,
-
+    output wire[`RegBus] reg2_o
 
     );
 
@@ -109,7 +108,7 @@ module ex(
     end
 
     // 算数部分
-    assign reg2_i_mux=((aluop_i==`EXE_SUB_OP)||(aluop_i==`EXE_SUBU_OP))
+    assign reg2_i_mux=((aluop_i==`EXE_SUB_OP))
                         ?(~reg2_i)+1:reg2_i; //如果是减法或slt指令reg2_i_mux就存补码，否则存原码
     assign result_sum=reg1_i+reg2_i_mux;
 
@@ -119,7 +118,7 @@ module ex(
             arithmeticres<=`ZeroWord;
         end else begin
             case (aluop_i)
-                `EXE_ADD_OP, `EXE_ADDU_OP, `EXE_ADDI_OP, `EXE_ADDIU_OP:begin
+                `EXE_ADDU_OP, `EXE_ADDI_OP:begin
                     arithmeticres<=result_sum;
                 end 
                 `EXE_SUB_OP:begin

@@ -49,7 +49,7 @@ module id(
     output reg[`RegBus] reg1_o,
     output reg[`RegBus] reg2_o,
     output reg[`RegAddrBus] wd_o, //译码阶段的指令要写入的目的寄存器地址
-    output reg wreg_o //译码阶段的指令是否有要写入的目的寄存器
+    output reg wreg_o, //译码阶段的指令是否有要写入的目的寄存器
     output wire[`RegBus] inst_o, //当前处于译码阶段的指令
 
     output reg next_inst_in_delayslot_o, //下一条进入译码阶段的指令是否位于延迟槽
@@ -83,6 +83,7 @@ module id(
     assign pc_plus_4=pc_i+4;
     assign pc_plus_8=pc_i+8;
     assign imm_sll2_signedext={{14{inst_i[15]}}, inst_i[15:0], 2'b00};
+    assign inst_o=inst_i;
 
     //对指令译码
     always @(*) begin
@@ -161,7 +162,7 @@ module id(
                             alusel_o<=`EXE_RES_SHIFT;
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b1;
-                            valid<=`Instvalid;
+                            valid<=`InstValid;
                         end
                         `EXE_OR:begin
                             wreg_o<=`WriteEnable;
@@ -169,7 +170,7 @@ module id(
                             alusel_o<=`EXE_RES_LOGIC;
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b1;
-                            valid<=`Instvalid;
+                            valid<=`InstValid;
                         end
                         `EXE_XOR:begin
                             wreg_o<=`WriteEnable;
@@ -177,7 +178,7 @@ module id(
                             alusel_o<=`EXE_RES_LOGIC;
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b1;
-                            valid<=`Instvalid;
+                            valid<=`InstValid;
                         end
                         `EXE_AND:begin
                             wreg_o<=`WriteEnable;
@@ -185,7 +186,7 @@ module id(
                             alusel_o<=`EXE_RES_LOGIC;
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b1;
-                            valid<=`Instvalid;
+                            valid<=`InstValid;
                         end
 
                         `EXE_JR:begin
@@ -195,7 +196,7 @@ module id(
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b0;
                             // link_addr_o<=`ZeroWord;
-                            branch_target_address_o;<=reg1_o;
+                            branch_target_address_o<=reg1_o;
                             branch_flag_o<=`Branch;
                             next_inst_in_delayslot_o<=`InDelaySlot;
                             instvalid<=`InstValid;
@@ -238,7 +239,7 @@ module id(
                 `EXE_ADDI:begin
                     wreg_o<=`WriteEnable;
                     sluop_o<=`EXE_ADDI_OP;
-                    alusel_o<=`EXE_ARITHMETIC;
+                    alusel_o<=`EXE_RES_ARITHMETIC;
                     reg1_read_o<=1'b1;
                     reg2_read_o<=1'b0;
                     imm<={{16{inst_i[15]}}, inst[15:0]};
@@ -279,7 +280,7 @@ module id(
                     reg1_read_o<=1'b1;
                     reg2_read_o<=1'b0;
                     instvalid<=`InstValid;
-                    if((reg1_o[31]==1'b1)||(reg1_o==`ZereWord))begin //<=0
+                    if((reg1_o[31]==1'b1)||(reg1_o==`ZeroWord))begin //<=0
                         branch_target_address_o<=pc_plus_4+imm_sll2_signedext;
                         branch_flag_o<=`Branch;
                         next_inst_in_delayslot_o<=`InDelaySlot;
@@ -292,7 +293,7 @@ module id(
                     reg1_read_o<=1'b1;
                     reg2_read_o<=1'b0;
                     instvalid<=`InstValid;
-                    if((reg1_o[31]==1'b0)||(reg1_o!=`ZereWord))begin //>0
+                    if((reg1_o[31]==1'b0)||(reg1_o!=`ZeroWord))begin //>0
                         branch_target_address_o<=pc_plus_4+imm_sll2_signedext;
                         branch_flag_o<=`Branch;
                         next_inst_in_delayslot_o<=`InDelaySlot;
@@ -335,7 +336,7 @@ module id(
                 end
                 //跳转
                 `EXE_J:begin
-                    wreg_o<=`WrireDisable;
+                    wreg_o<=`WriteDisable;
                     aluop_o<=`EXE_J_OP;
                     alusel_o<=`EXE_RES_JUMP_BRANCH;
                     reg1_read_o<=1'b0;

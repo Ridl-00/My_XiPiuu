@@ -30,12 +30,16 @@ module id_ex(
     input wire[`RegBus] id_reg2,
     input wire[`RegAddrBus] id_wd,
     input wire id_wreg,
+    input wire[`RegBus] id_inst, //从ID输入的
+
     output reg[`AluSelBus] ex_alusel,
     output reg[`AluOpBus] ex_aluop,
     output reg[`RegBus] ex_reg1,
     output reg[`RegBus] ex_reg2,
     output reg[`RegAddrBus] ex_wd,
-    output reg ex_wreg
+    output reg ex_wreg,
+    output reg[`RegBus] ex_inst //输出到EX的
+
     );
 
     always @(posedge clk) begin
@@ -46,6 +50,7 @@ module id_ex(
             ex_reg2<=`ZeroWord;
             ex_wd<=`NOPRegAddr;
             ex_wreg<=`WriteDisable;
+            ex_inst<=`ZeroWord;
         end else begin
             ex_aluop<=id_aluop;
             ex_alusel<=id_alusel;
@@ -54,6 +59,12 @@ module id_ex(
 			ex_wd <= id_wd;
 			ex_wreg <= id_wreg;		
         end       
+    end
+
+    //暂停什么的，还没写
+    always @(posedge clk) begin
+        //说是要在译码阶段没有暂停的情况下，直接将ID模块的输入通过接口ex_inst输出
+        ex_inst<=id_inst;
     end
 
 endmodule
