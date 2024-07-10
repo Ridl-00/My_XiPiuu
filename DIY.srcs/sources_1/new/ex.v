@@ -44,6 +44,11 @@ module ex(
 
     reg[`RegBus] logicout; // 保存逻辑运算的结果
     reg[`RegBus] shiftres; // 保存位移运算的结果
+    reg[`RegBus] arithmeticres; // 算数运算的结果
+
+    wire[`RegBus] reg2_i_mux; //寄存器2的多选器
+    wire[`RegBus] reg1_i_not;
+    wire[`RegBus] result_sum;
     
     //依据aluop_i进行运算,此处只有逻辑或
     always @(*) begin
@@ -54,12 +59,40 @@ module ex(
                 `EXE_OR_OP:begin
                     logicout<=reg1_i|reg2_i;
                 end
+                `EXE_LUI_OP:begin
+                    logicout<=reg1_i|reg2_i;
+                end
                 default:begin
                     logicout<=`ZeroWord;
                 end
             endcase
         end //if     
     end //always
+
+
+    // 算数部分
+    assign reg2_i_mux=((aluop_i==`EXE_SUB_OP)||(aluop_i==`EXE_SUBU_OP)||(aluop_i==`EXE_SLT_OP))
+                        ?(~reg2_i)+1:reg2_i; //如果是减法或slt指令reg2_i_mux就存补码，否则存原码
+    assign result_sum=reg1_i+reg2_i_mux;
+
+
+    always @(*) begin
+        if(rst==`RstEnable)begin
+            arithmeticres<=`ZeroWord;
+        end else begin
+            case (aluop_i)
+                `EXE_ADD_OP, `EXE_ADDU_OP, `EXE_ADDI_OP, `EXE_ADDIU_OP:begin
+                    arithmeticres<=result_sum;
+                end 
+                `EXE_SUB_OP:begin
+                    arithmeticres<=result_sum;
+                end
+                default: begin
+                    arithmeticres<=`ZeroWord;
+                end
+            endcase
+        end
+    end
 
     //依据alusel_i选择一个预算结果作为最终结果
     always @(*) begin
@@ -71,6 +104,9 @@ module ex(
             end
             `EXE_RES_SHIFT:begin
                 wdata_o<=shiftres;
+            end
+            `EXE_RES_ARITHMETIC:begin
+                wdata_o<=arithmeticres;
             end
             default:begin
                 wdata_o<=`ZeroWord;
