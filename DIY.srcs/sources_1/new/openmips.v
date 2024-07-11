@@ -24,22 +24,25 @@
 module openmips(
     input wire clk,
     input wire rst,
-    input wire[`RegBus] rom_data_i,
-    output wire[`RegBus] rom_addr_o,
-    output wire rom_ce_o,
 
-    //用于连接数据存储器ExtraRAM(原data_ram)
-    input wire[`RegBus] ram_data_i,
+    //连接指令存储器（在pc_reg）
+    input wire[`RegBus] rom_data_i, //从指令存储器取得的指令
+    output wire[`RegAddrBus] rom_addr_o, //输出到指令存储器的地址
+    output wire rom_ce_o, //指令存储器使能
 
-    output wire[`RegAddrBus] ram_addr_o,
-    output wire[`RegBus] ram_data_o,
-    output wire ram_we_o,
-    output wire[3:0] ram_sel_o,
-    output wire[3:0] ram_ce_o
+    //用于连接数据存储器ExtraRAM(原data_ram)（在mem）
+    input wire[`RegBus] ram_data_i, //写入的数据
 
+    output wire[`RegAddrBus] ram_addr_o, //写（读）的地址
+    output wire[`RegBus] ram_data_o, //读出的数据
+    output wire ram_we_o, //写使能
+    output wire[3:0] ram_sel_o, //字节选择信号
+    output wire[3:0] ram_ce_o //存储器使能
+
+    // input wire[1:0] state;
     );
 
-//!pc干嘛用的？
+
     wire[`InstAddrBus] pc;
 
     // If/ID--ID
@@ -63,8 +66,8 @@ module openmips(
     wire [`RegAddrBus] ex_wd_i;
 
     // EX--EX/MEM
-    wire ex_wreg_o;
-    wire[`RegAddrBus] ex_wd_o;
+    wire ex_wreg_o; //使能
+    wire[`RegAddrBus] ex_wd_o; //地址
     wire[`RegBus] ex_wdata_o;
 
     // EX/MEM--MEM
@@ -101,16 +104,22 @@ module openmips(
     wire[5:0] stall;
     wire stallreq_from_id;
     wire stallreq_from_ex;
+    wire stallreq_from_baseram;
+
+    wire        this_inst_is_load;
 
     //pc_reg例化
     pc_reg pc_reg0(
         .clk(clk),
         .rst(rst),
-        .stall(stall),
+        
+        .pc(pc),
+        .ce(rom_ce_o),
+
         .branch_flag_i(id_branch_flag_o),
         .branch_target_address_i(branch_target_adderss),
-        .pc(pc),
-        .ce(rom_ce_o)
+
+        .stall(stall)
     );
 
     //指令存储器的输入地址就是pc的地址
@@ -120,10 +129,14 @@ module openmips(
     if_id if_id0(
         .clk(clk),
         .rst(rst),
+
         .if_pc(pc),
         .if_inst(rom_data_i),
+
         .id_pc(id_pc_i),
-        .id_inst(id_inst_i)
+        .id_inst(id_inst_i),
+
+        .stall(stall)
     );
 
     //ID例化
@@ -166,10 +179,13 @@ module openmips(
         .inst_o(id_inst_o),
 
         .next_inst_in_delayslot_o(next_inst_in_delatslot_o),
+        .is_in_delayslot_o(id_is_in_delayslot_o),
+
         .branch_flag_o(id_branch_flag_o),
         .branch_target_address_o(branch_target_address),
         .link_addr_o(id_link_address_o),
-        .is_in_delayslot_o(id_is_in_delayslot_o),
+
+        .pre_inst_is_load    (this_inst_is_load),
 
         .stallreq(stallreq_from_id)
 
@@ -212,8 +228,10 @@ module openmips(
         .id_wreg(id_wreg_o),
 
         .id_link_address(id_link_address_o),
+
         .id_is_in_delayslot(id_is_in_delayslot_o),
         .next_inst_in_delayslot_i(next_inst_in_delayslot_o),
+        
         .id_inst(id_inst_o),
 
         //输出到EX的
@@ -225,8 +243,10 @@ module openmips(
 		.ex_wreg(ex_wreg_i),
 
         .ex_link_address(ex_link_address_i),
+
         .ex_is_in_delayslot(ex_is_in_delayslot_i),
         .is_in_delayslot_o(is_in_delayslot_i),
+
         .ex_inst(ex_inst_i)
     );
 
@@ -255,6 +275,8 @@ module openmips(
         .aluop_o(ex_aluop_o),
         .mem_addr_o(ex_mem_addr_o),
         .reg2_o(ex_reg2_o),
+
+        .this_inst_is_load (this_inst_is_load),
 
         .stallreq(stallreq_from_ex)
 
@@ -313,7 +335,11 @@ module openmips(
         .mem_we_o(ram_we_o),
         .mem_sel_o(ram_sel_o),
         .mem_data_o(ram_data_o),
-        .mem_ce_o(ram_ce_o)
+        .mem_ce_o(ram_ce_o),
+
+        .ram_data_i(ram_data_i),
+
+        .stallreq(stallreq_from_baseram)
 
 	);
 
@@ -342,6 +368,7 @@ module openmips(
 
         .stallreq_from_id(stallreq_from_id),
         .stallreq_from_ex(stallreq_from_ex),
+        .stallreq_from_baseram(stallreq_from_baseram),
 
         .stall(stall)
     );

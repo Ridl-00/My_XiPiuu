@@ -39,6 +39,8 @@ module id(
     input wire[`RegBus] reg1_data_i,
     input wire[`RegBus] reg2_data_i,
 
+    input wire[`AluOpBus] ex_aluop_i, //处于EX阶段指令的运算子类型，在发生load冒险 暂停时使用
+
     output reg reg1_read_o,
     output reg reg2_read_o,
     output reg[`RegAddrBus] reg1_addr_o,
@@ -79,10 +81,19 @@ module id(
     wire[`RegAddrBus] pc_plus_4; //当前译码阶段指令后面第1条指令的地址
     wire[`RegAddrBus] pc_plus_8; //当前译码阶段指令后面第2条指令的地址
     wire[`RegBus] imm_sll2_signedext; //分支指令中的offset左移两位，再符号扩展至32位的值
+    
+    //load冒险所需
+    reg stallreq_for_reg1_loadrelate;
+    reg stallreq_for_reg2_loadrelate;
+    wire pre_inst_is_load;
 
     assign pc_plus_4=pc_i+4;
     assign pc_plus_8=pc_i+8;
     assign imm_sll2_signedext={{14{inst_i[15]}}, inst_i[15:0], 2'b00};
+    assign stallreq=stallreq_for_reg1_loadrelate|stallreq_for_reg2_loadrelate;
+    assign pre_inst_is_load=((ex_aluop_i==`EXE_LB_OP)||(ex_aluop_i==`EXE_LW_OP))?1'b1:1'b0;
+
+
     assign inst_o=inst_i;
 
     //对指令译码
@@ -371,6 +382,9 @@ module id(
     always @(*) begin
         if(rst==`RstEnable)begin
             reg1_o<=`ZeroWord;
+        //前一条是装载 && 上条要写的就是这条要读的 && reg1要读
+        end else if(pre_inst_is_load==`'b1 && ex_wd_i==reg1_addr_o && reg1_read_o==1'b1)begin
+            stallreq_for_reg1_loadrelate<=`Stop;
         //reg1要读&&EX要写&&reg1要读的寄存器就是EX阶段要写的寄存器
         end else if((reg1_read_o==1'b1)&&(ex_wreg_i==1'b1)&&(ex_wd_i==reg1_addr_o))begin
             reg1_o<=ex_wdata_i;
@@ -388,6 +402,8 @@ module id(
     always @(*) begin
         if(rst==`RstEnable)begin
             reg2_o<=`ZeroWord;
+        end else if(pre_inst_is_load==`'b1 && ex_wd_i==reg2_addr_o && reg2_read_o==1'b1)begin
+            stallreq_for_reg2_loadrelate<=`Stop;
         end else if((reg2_read_o==1'b1)&&(ex_wreg_i==1'b1)&&(ex_wd_i==reg2_addr_o))begin
             reg2_o<=ex_wdata_i;
         end else if((reg2_read_o==1'b1)&&(mem_wreg_i==1'b1)&&(mem_wd_i==reg2_addr_o))begin

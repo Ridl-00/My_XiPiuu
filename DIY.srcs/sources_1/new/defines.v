@@ -25,7 +25,9 @@
 `define RstDisable 1'b0
 `define ZeroWord 32'h00000000 //32位的数值0
 `define WriteEnable 1'b1
+`define WriteEnable_n   1'b0 //写使能（低有效）
 `define WriteDisable 1'b0
+`define WriteDisable_n  1'b1 //写除能（高有效）
 `define ReadEnable 1'b1
 `define ReadDisable 1'b0
 `define AluOpBus 7:0 //译码阶段的输出aluop_o的宽度
