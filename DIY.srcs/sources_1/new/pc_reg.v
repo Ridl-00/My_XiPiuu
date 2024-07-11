@@ -24,6 +24,10 @@
 module pc_reg(
     input   wire rst, //复位信号
     input   wire clk, //时钟信号
+
+    //从ctrl输入的
+    input wire[5:0] stall,
+
     output  reg[`InstAddrBus] pc, //要读取的指令地址
     output  reg ce //指令存储器使能信号
     );
@@ -31,8 +35,12 @@ module pc_reg(
     always @ (posedge clk) begin
         if (ce == `ChipDisable) begin // ce==0
             pc <= 32'h00000000;    // 指令存储器使能信号无效，pc赋值为0（<=非阻塞赋值）（相当于无效时保持为0）
-        end else begin
-            pc<=pc+4'h4;
+        end else if(stall[0]==`NoStop)begin
+            if(branch_flag_i==`Branch)begin
+                pc<=branch_target_address_i;
+            end else begin
+                pc<=pc+4'h4;
+            end
         end
     end
 

@@ -158,3 +158,7 @@
 `define RegNum 32 //通用寄存器的数量
 `define RegNumLog2 5 //寻址通用寄存器使用的地址位数
 `define NOPRegAddr 5'b00000 //用于无操作指令的寄存器地址
+
+//暂停控制
+`define Stop 1'b1 //暂停
+`define NoStop 1'b0 //继续
