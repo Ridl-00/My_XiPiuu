@@ -24,11 +24,11 @@
 module if_id(
     input wire rst,
     input wire clk,
-    input wire[`InstAddrBus] if_pc,
 
     //从ctrl输入的
     input wire[5:0] stall,
 
+    input wire[`InstAddrBus] if_pc,
     input wire[`InstBus] if_inst,
     output reg[`InstAddrBus] id_pc,
     output reg[`InstBus] id_inst

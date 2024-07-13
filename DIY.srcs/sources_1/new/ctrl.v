@@ -23,9 +23,13 @@
 module ctrl(
     input wire rst,
     input wire stallreq_from_id, //来自译码阶段的暂停请求
-    input stallreq_from_ex, //来自执行阶段的暂停请求
+    input wire stallreq_from_ex, //来自执行阶段的暂停请求
+    input wire stallreq_from_baseram, //来自BaseRAM的暂停请求
+    
     output reg[5:0] stall //暂停流水线控制信号
     );
+
+//！没有写应对来自baseram的暂停请求的逻辑
 
     /*stall[0] 1 取指地址PC保持不变
      *stall[1] 1 取指阶段暂停

@@ -47,7 +47,7 @@ module mem_wb(
 		end else if(stall[4]==`Stop && stall[5]==`NoStop)begin
 			wb_wd<=`NOPRegAddr;
 			wb_wreg<=`WriteDisable;
-			wb_data<=`ZeroWord;
+			wb_wdata<=`ZeroWord;
 		end	else if(stall[4]==`NoStop)begin
             wb_wd<=mem_wd;
             wb_wreg<=mem_wreg;

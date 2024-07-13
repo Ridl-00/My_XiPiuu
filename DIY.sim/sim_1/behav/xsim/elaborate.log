@@ -4,6 +4,8 @@ Running: D:/Xilinx/Vivado/2019.2/bin/unwrapped/win64.o/xelab.exe -wto 67025d10e7
 Using 2 slave threads.
 Starting static elaboration
 Pass Through NonSizing Optimizer
+WARNING: [VRFC 10-5021] port 'rom_data_i' is not connected on this instance [E:/projects_2024/FPGA_MIPS/DIY/DIY.srcs/sim_1/new/openmips_min_sopc_tb.v:43]
+WARNING: [VRFC 10-3283] element index 31 into 'pc_plus_4' is out of bounds [E:/projects_2024/FPGA_MIPS/DIY/DIY.srcs/sources_1/new/id.v:366]
 Completed static elaboration
 Starting simulation data flow analysis
 Completed simulation data flow analysis
@@ -17,9 +19,8 @@ Compiling module xil_defaultlib.ex
 Compiling module xil_defaultlib.ex_mem
 Compiling module xil_defaultlib.mem
 Compiling module xil_defaultlib.mem_wb
+Compiling module xil_defaultlib.ctrl
 Compiling module xil_defaultlib.openmips
-Compiling module xil_defaultlib.inst_rom
-Compiling module xil_defaultlib.openmips_min_sopc
 Compiling module xil_defaultlib.openmips_min_sopc_tb
 Compiling module xil_defaultlib.glbl
 Built simulation snapshot openmips_min_sopc_tb_behav

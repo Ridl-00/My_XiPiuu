@@ -27,17 +27,17 @@ module openmips(
 
     //连接指令存储器（在pc_reg）
     input wire[`RegBus] rom_data_i, //从指令存储器取得的指令
-    output wire[`RegAddrBus] rom_addr_o, //输出到指令存储器的地址
+    output wire[`RegBus] rom_addr_o, //输出到指令存储器的地址
     output wire rom_ce_o, //指令存储器使能
 
     //用于连接数据存储器ExtraRAM(原data_ram)（在mem）
     input wire[`RegBus] ram_data_i, //写入的数据
 
-    output wire[`RegAddrBus] ram_addr_o, //写（读）的地址
+    output wire[`RegBus] ram_addr_o, //写（读）的地址
     output wire[`RegBus] ram_data_o, //读出的数据
     output wire ram_we_o, //写使能
     output wire[3:0] ram_sel_o, //字节选择信号
-    output wire[3:0] ram_ce_o //存储器使能
+    output wire ram_ce_o //存储器使能
 
     // input wire[1:0] state;
     );
@@ -52,25 +52,51 @@ module openmips(
     // ID--ID/EX
     wire[`AluOpBus] id_aluop_o;
     wire[`AluSelBus] id_alusel_o;
+
     wire[`RegBus] id_reg1_o;
     wire[`RegBus] id_reg2_o;
-    wire id_wreg_o;
-    wire[`RegAddrBus] id_wd_o;
+
+    wire id_wreg_o; //使能
+    wire[`RegAddrBus] id_wd_o; //寄存器地址
+
+    wire id_is_in_delayslot_o;
+    wire[`RegBus] id_link_address_o; //指令地址
+
+    wire[`RegBus] id_inst_o;
 
     // Id/EX--EX
     wire[`AluOpBus] ex_aluop_i;
     wire[`AluSelBus] ex_alusel_i;
-    wire[`RegBus] ex_reg1_i;
-    wire[`RegBus] ex_reg2_i;
-    wire ex_wreg_i;
-    wire [`RegAddrBus] ex_wd_i;
+
+    wire[`RegBus] ex_reg1_i; //数据
+    wire[`RegBus] ex_reg2_i; //数据
+
+    wire ex_wreg_i; //使能
+    wire [`RegAddrBus] ex_wd_i; //寄存器地址
+
+    wire ex_is_in_delayslot;
+    wire[`RegBus] ex_link_address_i; //指令地址
+
+    wire[`RegBus] ex_inst_i;
 
     // EX--EX/MEM
-    wire ex_wreg_o; //使能
-    wire[`RegAddrBus] ex_wd_o; //地址
+    wire[`AluOpBus] ex_aluop_o;
+
+    wire[`RegBus] ex_reg1_o;
+    wire[`RegBus] ex_reg2_o;
+    wire[`RegBus] ex_mem_addr_o;
+
+    wire ex_wreg_o; //寄存器写使能
+    wire[`RegAddrBus] ex_wd_o; //寄存器地址
     wire[`RegBus] ex_wdata_o;
 
     // EX/MEM--MEM
+    wire[`AluOpBus] mem_aluop_i;
+
+    wire[`RegBus] mem_mem_addr_i;
+    wire[`RegBus] mem_reg1_i;
+    wire[`RegBus] mem_reg2_i;
+
     wire mem_wreg_i;
     wire[`RegAddrBus] mem_wd_i;
     wire[`RegBus] mem_wdata_i;
@@ -98,7 +124,7 @@ module openmips(
     wire is_in_delayslot_o;
     wire next_inst_in_delayslot_o;
     wire id_branch_flag_o;
-    wire[`RegAddrBus] branch_target_address;
+    wire[`RegBus] branch_target_address;
 
     //暂停相关
     wire[5:0] stall;
@@ -106,7 +132,7 @@ module openmips(
     wire stallreq_from_ex;
     wire stallreq_from_baseram;
 
-    wire        this_inst_is_load;
+    // wire        this_inst_is_load;
 
     //pc_reg例化
     pc_reg pc_reg0(
@@ -117,7 +143,7 @@ module openmips(
         .ce(rom_ce_o),
 
         .branch_flag_i(id_branch_flag_o),
-        .branch_target_address_i(branch_target_adderss),
+        .branch_target_address_i(branch_target_address),
 
         .stall(stall)
     );
@@ -185,7 +211,7 @@ module openmips(
         .branch_target_address_o(branch_target_address),
         .link_addr_o(id_link_address_o),
 
-        .pre_inst_is_load    (this_inst_is_load),
+        // .pre_inst_is_load    (this_inst_is_load),
 
         .stallreq(stallreq_from_id)
 
@@ -264,7 +290,7 @@ module openmips(
         
         .inst_i(ex_inst_i),
 
-        .link_address_i(ex_link_adddress_i),
+        .link_address_i(ex_link_address_i),
         .is_in_delayslot_i(ex_is_in_delayslot_i),
 
         //输出到EX/MEM的
@@ -276,7 +302,7 @@ module openmips(
         .mem_addr_o(ex_mem_addr_o),
         .reg2_o(ex_reg2_o),
 
-        .this_inst_is_load (this_inst_is_load),
+        // .this_inst_is_load (this_inst_is_load),
 
         .stallreq(stallreq_from_ex)
 
@@ -319,11 +345,11 @@ module openmips(
 		.wdata_i(mem_wdata_i),
 
         .aluop_i(mem_aluop_i),
-        .mem_adddr_i(mem_mem_addr_i),
+        .mem_addr_i(mem_mem_addr_i),
         .reg2_i(mem_reg2_i),
 
         //从ExtRAM输入的
-        .mem_data_i(ram_data_i),
+        .ram_data_i(ram_data_i),
 	  
 		//输出到MEM/WB的
 		.wd_o(mem_wd_o),
@@ -336,8 +362,6 @@ module openmips(
         .mem_sel_o(ram_sel_o),
         .mem_data_o(ram_data_o),
         .mem_ce_o(ram_ce_o),
-
-        .ram_data_i(ram_data_i),
 
         .stallreq(stallreq_from_baseram)
 

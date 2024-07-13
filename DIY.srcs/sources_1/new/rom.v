@@ -30,7 +30,7 @@ module rom(
                         //深度64，每个元素宽度32
     
     //初始化
-    initial $readmemh ( "E:/projects_2024/FPGA_MIPS/DIY/DIY.srcs/sources_1/new/rom.txt", rom);
+    initial $readmemh ( "E:/projects_2024/FPGA_MIPS/DIY/DIY.srcs/sources_1/new/inst_ADDU.txt", rom);
 
     always @ (*) begin
         if(ce==1'b0) begin //写使能信号无效

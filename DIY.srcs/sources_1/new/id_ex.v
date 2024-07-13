@@ -24,24 +24,39 @@
 module id_ex(
     input wire rst,
     input wire clk,
+
+    //从ID输入的
     input wire[`AluSelBus] id_alusel,
     input wire[`AluOpBus] id_aluop,
+
     input wire[`RegBus] id_reg1,
     input wire[`RegBus] id_reg2,
     input wire[`RegAddrBus] id_wd,
     input wire id_wreg,
-    input wire[`RegBus] id_inst, //从ID输入的
+
+    input wire id_is_in_delayslot,
+    input wire next_inst_in_delayslot_i,
+    input wire[`RegBus] id_link_address,
+
+    input wire[`RegBus] id_inst, 
 
     //从ctrl输入的
     input wire[5:0] stall,
 
+    //输出到EX的
     output reg[`AluSelBus] ex_alusel,
     output reg[`AluOpBus] ex_aluop,
+
     output reg[`RegBus] ex_reg1,
     output reg[`RegBus] ex_reg2,
     output reg[`RegAddrBus] ex_wd,
     output reg ex_wreg,
-    output reg[`RegBus] ex_inst //输出到EX的
+
+    output reg ex_is_in_delayslot,
+    output reg is_in_delayslot_o,
+    output reg[`RegBus] ex_link_address,
+
+    output reg[`RegBus] ex_inst
 
     );
 

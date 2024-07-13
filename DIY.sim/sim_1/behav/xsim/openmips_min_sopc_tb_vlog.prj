@@ -1,13 +1,14 @@
 # compile verilog/system verilog design source files
 verilog xil_defaultlib "E:/projects_2024/FPGA_MIPS/DIY/DIY.srcs/sources_1/new/defines.v" --include "../../../../DIY.srcs/sources_1/new" \
+"../../../../DIY.srcs/sources_1/new/ctrl.v" \
+"../../../../DIY.srcs/sources_1/new/ex.v" \
 "../../../../DIY.srcs/sources_1/new/ex_mem.v" \
+"../../../../DIY.srcs/sources_1/new/id.v" \
 "../../../../DIY.srcs/sources_1/new/id_ex.v" \
 "../../../../DIY.srcs/sources_1/new/if_id.v" \
-"../../../../DIY.srcs/sources_1/new/inst_rom.v" \
 "../../../../DIY.srcs/sources_1/new/mem.v" \
 "../../../../DIY.srcs/sources_1/new/mem_wb.v" \
 "../../../../DIY.srcs/sources_1/new/openmips.v" \
-"../../../../DIY.srcs/sources_1/new/openmips_min_sopc.v" \
 "../../../../DIY.srcs/sources_1/new/pc_reg.v" \
 "../../../../DIY.srcs/sources_1/new/regfile.v" \
 "../../../../DIY.srcs/sim_1/new/openmips_min_sopc_tb.v" \

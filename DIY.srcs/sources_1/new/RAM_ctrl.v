@@ -18,7 +18,7 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-/*
+/*  仲裁的时候用
     | 虚地址区间            | 说明           |
     | 0x80000000-0x800FFFFF | 监控程序代码   |
     | 0x80100000-0x803FFFFF | 用户代码空间   |
@@ -142,12 +142,13 @@ module RAM_ctrl(
         end
     end
 
-    //确认输出的数据
+    //确认输出的数据(进行字节选择（LB）)
     always @(*) begin
         ram_data_o=`ZeroWord;
 //有一个串口的情况，没写
+//此处适配的已经是小端序，maybe
         if(is_base_ram)begin
-            case (mem_sel_n)
+            case (mem_sel_o)
                 4'b1110:begin
                     ram_data_o={{24{base_ram_o[7]}}, base_ram_o[7:0]};
                 end 
@@ -164,11 +165,11 @@ module RAM_ctrl(
                     ram_data_o=base_ram_o;
                 end
                 default:begin
-                    ram_Data_o=base_ram_o;
+                    ram_data_o=base_ram_o;
                 end
             endcase
         end else if(is_ext_ram)begin
-            case (mem_sel_n)
+            case (mem_sel_o)
                 4'b1110:begin
                     ram_data_o={{24{ext_ram_o[7]}}, ext_ram_o[7:0]};
                 end 
@@ -185,7 +186,7 @@ module RAM_ctrl(
                     ram_data_o=ext_ram_o;
                 end
                 default:begin
-                    ram_Data_o=ext_ram_o;
+                    ram_data_o=ext_ram_o;
                 end
             endcase
         end else begin

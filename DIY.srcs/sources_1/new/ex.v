@@ -25,21 +25,29 @@ module ex(
     input wire rst,
 
     //输入到EX的
-    input wire[`AluSelBus] alusel_i,
     input wire[`AluOpBus] aluop_i,
+    input wire[`AluSelBus] alusel_i,
     input wire[`RegBus] reg1_i,
     input wire[`RegBus] reg2_i,
     input wire[`RegAddrBus] wd_i,
     input wire wreg_i,
 
+    input wire[`RegBus] inst_i,
+
     output reg[`RegAddrBus] wd_o,
     output reg wreg_o,
     output reg[`RegBus] wdata_o,
 
+    //是否转移及link address
+    input wire[`RegBus] link_address_i,
+    input wire is_in_delayslot_i,
+    
     //装载、存储指令所需
     output wire[`AluOpBus] aluop_o,
     output wire[`RegBus] mem_addr_o,
-    output wire[`RegBus] reg2_o
+    output wire[`RegBus] reg2_o,
+
+    output reg stallreq
 
     );
 
@@ -56,6 +64,7 @@ module ex(
     assign mem_addr_o=reg1_i+{{16{inst_i[15]}},inst_i[15:0]};
         //{{16{inst_i[15]}}：这是一个大括号扩展操作（，它复制inst_i[15]的值到一个16位的向量中。
         //如果inst_i[15]是1，则这个表达式结果为16'b1111111111111111；如果是0，则结果为16'b0000000000000000。
+    assign reg2_o=reg2_i; //传递操作数
     
     //依据aluop_i进行运算
     //逻辑部分

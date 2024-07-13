@@ -28,6 +28,10 @@ module pc_reg(
     //从ctrl输入的
     input wire[5:0] stall,
 
+    //从ID输入的
+    input wire branch_flag_i,
+    input wire[`RegBus] branch_target_address_i,
+
     output  reg[`InstAddrBus] pc, //要读取的指令地址
     output  reg ce //指令存储器使能信号
     );

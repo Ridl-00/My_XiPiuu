@@ -39,7 +39,8 @@ module openmips_min_sopc_tb(
         #1000 $stop;
     end
 
-    openmips_min_sopc openmips_min_sopc0(
+    // openmips_min_sopc openmips_min_sopc0(
+    openmips openmips0(
         .clk(CLOCK_50),
         .rst(rst)
     );

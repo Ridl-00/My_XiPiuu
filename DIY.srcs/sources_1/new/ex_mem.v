@@ -35,17 +35,17 @@ module ex_mem(
 
     //加载、访存指令所需
     input wire[`AluOpBus] ex_aluop,
-    input wire[`RegAddrBus] ex_mem_addr,
+    input wire[`RegBus] ex_mem_addr,
     input wire[`RegBus] ex_reg2,
 	
 	//送到访存阶段的信息
-	output reg[`RegAddrBus]      mem_wd,
-	output reg                   mem_wreg,
+	output reg[`RegAddrBus] mem_wd,
+	output reg mem_wreg,
 	output reg[`RegBus] mem_wdata,
 
     //加载、访存指令所需
     output reg[`AluOpBus] mem_aluop,
-    output reg[`RegAddrBus] mem_mem_addr,
+    output reg[`RegBus] mem_mem_addr,
     output reg[`RegBus] mem_reg2
     );
 

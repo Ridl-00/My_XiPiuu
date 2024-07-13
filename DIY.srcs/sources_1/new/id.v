@@ -26,6 +26,8 @@ module id(
     input wire[`InstAddrBus] pc_i,
     input wire[`InstBus] inst_i,
 
+    input wire[`AluOpBus] ex_aluop_i, //处于EX阶段指令的运算子类型，在发生load冒险 暂停时使用
+
     //处于EX阶段的指令要写入目的寄存器的信息
     input wire ex_wreg_i,
     input wire[`RegBus] ex_wdata_i,
@@ -39,13 +41,16 @@ module id(
     input wire[`RegBus] reg1_data_i,
     input wire[`RegBus] reg2_data_i,
 
-    input wire[`AluOpBus] ex_aluop_i, //处于EX阶段指令的运算子类型，在发生load冒险 暂停时使用
+    // 这一条在译码阶段is..为true（上一条是转移）
+    input wire is_in_delayslot_i,
 
+    //输出到regfile的
     output reg reg1_read_o,
     output reg reg2_read_o,
     output reg[`RegAddrBus] reg1_addr_o,
     output reg[`RegAddrBus] reg2_addr_o,
     
+    //输出到EX的
     output reg[`AluOpBus] aluop_o,
     output reg[`AluSelBus] alusel_o,
     output reg[`RegBus] reg1_o,
@@ -54,9 +59,11 @@ module id(
     output reg wreg_o, //译码阶段的指令是否有要写入的目的寄存器
     output wire[`RegBus] inst_o, //当前处于译码阶段的指令
 
-    output reg next_inst_in_delayslot_o, //下一条进入译码阶段的指令是否位于延迟槽
-    output reg is_in_delayslot_o, //当前处于译码阶段的指令是否位于延迟槽
+    output reg next_inst_in_delayslot_o, //下一条进入译码阶段的指令是否位于延迟槽(当前处于ID阶段的是否为转移指令)
+    output reg is_in_delayslot_o, //当前处于ID阶段的指令是否位于延迟槽（上一条是否为转移指令）
+    // output pre_inst_is_load,
 
+    //分支 解决控制冒险问题
     output reg branch_flag_o,
     output reg[`RegBus] branch_target_address_o,
     output reg[`RegBus] link_addr_o, //转移指令要保存的返回地址
@@ -173,7 +180,7 @@ module id(
                             alusel_o<=`EXE_RES_SHIFT;
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b1;
-                            valid<=`InstValid;
+                            instvalid<=`InstValid;
                         end
                         `EXE_OR:begin
                             wreg_o<=`WriteEnable;
@@ -181,7 +188,7 @@ module id(
                             alusel_o<=`EXE_RES_LOGIC;
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b1;
-                            valid<=`InstValid;
+                            instvalid<=`InstValid;
                         end
                         `EXE_XOR:begin
                             wreg_o<=`WriteEnable;
@@ -189,7 +196,7 @@ module id(
                             alusel_o<=`EXE_RES_LOGIC;
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b1;
-                            valid<=`InstValid;
+                            instvalid<=`InstValid;
                         end
                         `EXE_AND:begin
                             wreg_o<=`WriteEnable;
@@ -197,7 +204,7 @@ module id(
                             alusel_o<=`EXE_RES_LOGIC;
                             reg1_read_o<=1'b1;
                             reg2_read_o<=1'b1;
-                            valid<=`InstValid;
+                            instvalid<=`InstValid;
                         end
 
                         `EXE_JR:begin
@@ -249,11 +256,11 @@ module id(
                 end
                 `EXE_ADDI:begin
                     wreg_o<=`WriteEnable;
-                    sluop_o<=`EXE_ADDI_OP;
+                    aluop_o<=`EXE_ADDI_OP;
                     alusel_o<=`EXE_RES_ARITHMETIC;
                     reg1_read_o<=1'b1;
                     reg2_read_o<=1'b0;
-                    imm<={{16{inst_i[15]}}, inst[15:0]};
+                    imm<={{16{inst_i[15]}}, inst_i[15:0]};
                     wd_o<=rt;
                     instvalid<=`InstValid;
                 end
@@ -380,10 +387,11 @@ module id(
 
 
     always @(*) begin
+        stallreq_for_reg1_loadrelate<=`NoStop;
         if(rst==`RstEnable)begin
             reg1_o<=`ZeroWord;
         //前一条是装载 && 上条要写的就是这条要读的 && reg1要读
-        end else if(pre_inst_is_load==`'b1 && ex_wd_i==reg1_addr_o && reg1_read_o==1'b1)begin
+        end else if(pre_inst_is_load==1'b1 && ex_wd_i==reg1_addr_o && reg1_read_o==1'b1)begin
             stallreq_for_reg1_loadrelate<=`Stop;
         //reg1要读&&EX要写&&reg1要读的寄存器就是EX阶段要写的寄存器
         end else if((reg1_read_o==1'b1)&&(ex_wreg_i==1'b1)&&(ex_wd_i==reg1_addr_o))begin
@@ -400,9 +408,10 @@ module id(
     end
 
     always @(*) begin
+        stallreq_for_reg2_loadrelate<=`NoStop;
         if(rst==`RstEnable)begin
             reg2_o<=`ZeroWord;
-        end else if(pre_inst_is_load==`'b1 && ex_wd_i==reg2_addr_o && reg2_read_o==1'b1)begin
+        end else if(pre_inst_is_load==1'b1 && ex_wd_i==reg2_addr_o && reg2_read_o==1'b1)begin
             stallreq_for_reg2_loadrelate<=`Stop;
         end else if((reg2_read_o==1'b1)&&(ex_wreg_i==1'b1)&&(ex_wd_i==reg2_addr_o))begin
             reg2_o<=ex_wdata_i;
@@ -416,4 +425,13 @@ module id(
             reg2_o<=`ZeroWord;
         end 
     end
+
+    always @(*) begin
+        if(rst==`RstEnable)begin
+            is_in_delayslot_o<=`NotInDelaySlot;
+        end else begin
+            is_in_delayslot_o<=is_in_delayslot_i;
+        end
+    end
+
 endmodule
